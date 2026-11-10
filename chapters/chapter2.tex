@@ -1,0 +1,69 @@
+\chapter{Methodology}
+
+\par The study is based on documents rather than experiments: each documented weakness is one unit of analysis, classified by fixed rules and then counted. Figure~\ref{fig:pipeline} shows the order of the steps. The dataset and the script that calculates every number in Chapter~3 are kept in the repository together with the source of this article, so anyone can repeat the analysis or classify the records again.
+
+\begin{figure}[!htb]
+\centering
+\begin{tikzpicture}[
+    font=\small,
+    stage/.style={draw, rounded corners=3pt, align=center, minimum height=1.15cm, text width=2.6cm, fill=natclassic!8},
+    arr/.style={-{Latex[length=2mm]}, thick},
+    node distance=0.55cm,
+]
+\node[stage] (a) {\textbf{Collect}\\VMP database\\(50 entries)};
+\node[stage, right=of a] (b) {\textbf{Filter}\\drop 1 non-incident;\\add 5 primary cases};
+\node[stage, right=of b] (c) {\textbf{Read}\\original write-up\\of each record};
+\node[stage, right=of c] (d) {\textbf{Code}\\nature, origin,\\component, flags};
+\node[stage, right=of d] (e) {\textbf{Analyse}\\Python script\\$\rightarrow$ tables, charts};
+\draw[arr] (a) -- (b);
+\draw[arr] (b) -- (c);
+\draw[arr] (c) -- (d);
+\draw[arr] (d) -- (e);
+\end{tikzpicture}
+\caption{Research workflow used to build and analyse the dataset}
+\label{fig:pipeline}
+\end{figure}
+
+\section{Data sources and selection}
+
+\par The main source is the \acrfull{glo:vmp}, an open online catalogue of \acrshort{glo:mcp} weaknesses in which every entry links to the original report \cite{vmp}. I preferred it to the \acrshort{glo:cve} list because it also includes weaknesses that never received an identifier, for example attack techniques that target the protocol itself. When the data was collected, on 10 November 2026, the catalogue had 50 entries. One of them describes an academic paper and not a specific weakness, so it was excluded, which left \nVmp{} records.
+
+\par During the literature review I came across several well-documented incidents that were missing from the catalogue. Relying on a single curator is a source of bias, so I added five of these cases, each taken from its original disclosure: the sandbox escape in the official filesystem server \cite{cymulate2025}, the malicious \texttt{postmark-mcp} package \cite{thn2025postmark}, a path traversal in a platform that hosts \acrshort{glo:mcp} servers \cite{gitguardian2025}, the exposure of data between customers of Asana's \acrshort{glo:mcp} integration \cite{pomerium2025asana}, and the unauthenticated attack chain in \texttt{mcp-atlassian} \cite{pluto2026}. The final dataset has \nRecords{} records disclosed between \firstDisclosure{} and \lastDisclosure{}.
+
+\par A record was included if the weakness was publicly documented in enough technical detail to identify its root cause and if it concerned an \acrshort{glo:mcp} component or a behaviour reached through \acrshort{glo:mcp}. Several \acrshort{glo:cve} identifiers published together for one component, such as the three issues in the git server, were counted as one record, since they shared a cause and a fix.
+
+\section{Classification scheme}
+
+\par Every record received a value on two main axes and three additional attributes, all listed in Table~\ref{tab:scheme}. The hardest decision was the \textit{nature} of a weakness, so I used one control question to keep it consistent: \textit{would this weakness still exist if the language model were replaced by ordinary code that calls the same tools?} If the answer is yes, the weakness is \textit{classic}; if the attack only works by convincing a model through text, it is \textit{AI-native}. The \textit{hybrid} category covers two situations: a classic flaw that can only be reached through prompt injection, and an old type of flaw that appears only because of the way agents behave.
+
+\begin{table}[!htb]
+\caption{Coding scheme applied to every record}
+\label{tab:scheme}
+\centering
+\small
+\renewcommand{\arraystretch}{1.0}
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+\toprule
+\textbf{Axis} & \textbf{Value} & \textbf{Decision rule} \\
+\midrule
+Nature & Classic & A known weakness class (e.g. injection, traversal, SSRF, missing authentication) that is exploitable without any model in the loop. \\
+ & Hybrid & A classic flaw that is reached through prompt injection, or a classic class of flaw that only appears because of agent behaviour. \\
+ & AI-native & The attack depends on a model treating untrusted text as instructions; no code fix of a single component removes it. \\
+\midrule
+Origin & Protocol design & Caused by what the specification allows or does not require. \\
+ & Implementation & A coding error in a server, client, host, SDK or tool. \\
+ & Integration design & Each part works as built, but the way they are combined (privileges, data access, missing confirmation) creates the risk. \\
+ & Supply chain & Introduced through distribution: packages, registries, hosting. \\
+ & Deployment & Caused by default configuration or operator setup. \\
+\midrule
+Component & \multicolumn{2}{l}{Server, Host/client, SDK, Developer tooling, Protocol, Ecosystem} \\
+Flags & \multicolumn{2}{l}{CVE assigned; insecure default involved; first-party (official project) code} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\par Two borderline cases, records R25 and R21 in Appendix~A, illustrate how the rules were applied. The weakness known as ``MCPoison'' in the Cursor editor allowed an attacker to change a project's \acrshort{glo:mcp} configuration after the user had already approved it \cite{vmp}. The editor never checked the file again, which is a missing integrity check with no model involved, so the record is classic, with implementation as its origin. In the zero-click attack through a shared document, the model reads hidden instructions and then runs a command. The result is ordinary code execution, but it cannot be reached without the model, so this record is hybrid, originating in integration design.
+
+\section{Procedure and reliability}
+
+\par For every record I opened the advisory or research post linked from the catalogue, summarised the root cause in one sentence and only then assigned the values. All records were classified by one person, a limitation discussed in Section~\ref{sec:validity}. To reduce its effect, the rules were fixed before classification began, and every value is stored in a CSV file next to its source.

@@ -1,0 +1,102 @@
+\chapter{Background and Related Work}
+
+\section{How the Model Context Protocol works}
+
+\par \acrshort{glo:mcp} uses a client--server architecture with three roles \cite{mcpspec2026}. The \textit{host} is the application the user works with, such as a desktop chat assistant or a code editor with AI features. For every external program it connects to, the host creates a separate \textit{client}. That external program is called a \textit{server}, and it offers three kinds of capabilities. \textit{Tools} are functions the model is allowed to call, for example ``create issue'' or ``run query''. \textit{Resources} give the model read-only context, such as the content of a file. \textit{Prompts} are prepared templates for common tasks. Client and server exchange JSON-RPC messages. A local server is started by the host as a child process and communicates through standard input and output (stdio); a remote server is reached over HTTP.
+
+\par From a security point of view, the most important part is the way tools are offered to the model. After connecting, the server sends a list of its tools. Each entry has a name, a short description written in natural language and a schema of the parameters. The host adds these descriptions to the model's context, and the model then decides by itself which tool to call and when. This means that text written by whoever published the server reaches the model almost like a request from the user. The results returned by tools, which can include the content of web pages, tickets or emails, end up in that context too. Figure~\ref{fig:mcp_arch} marks the trust boundaries of this design and the four places where text controlled by an attacker can enter the system.
+
+\begin{figure}[!htb]
+\centering
+\begin{tikzpicture}[
+    font=\small,
+    box/.style={draw, rounded corners=2pt, align=center, minimum height=0.9cm, inner sep=4pt},
+    entry/.style={draw=natnative, very thick, fill=natnative!8, rounded corners=2pt, align=center, font=\footnotesize, inner sep=3pt},
+    arr/.style={-{Latex[length=2mm]}, thick},
+]
+\node[box, fill=natclassic!10, minimum width=2.6cm] (llm) {Language\\model};
+\node[box, below=0.45cm of llm, minimum width=2.6cm] (c1) {MCP client A};
+\node[box, below=0.25cm of c1, minimum width=2.6cm] (c2) {MCP client B};
+\node[draw, dashed, rounded corners=4pt, fit=(llm)(c1)(c2), inner sep=8pt, label={[font=\footnotesize\bfseries]above:Host application}] (host) {};
+
+\node[box, right=2.4cm of c1, minimum width=3.0cm, fill=softgray!10] (s1) {Local server\\(stdio process)};
+\node[box, right=2.4cm of c2, minimum width=3.0cm, fill=softgray!10] (s2) {Remote server\\(HTTP)};
+
+\node[box, right=1.3cm of s1, minimum width=2.4cm] (r1) {Files, shell,\\git, databases};
+\node[box, right=1.3cm of s2, minimum width=2.4cm] (r2) {SaaS APIs,\\web content};
+
+\node[box, left=1.0cm of llm, minimum width=1.6cm] (user) {User};
+
+\draw[arr] (user) -- (llm);
+\draw[arr, <->] (llm) -- (c1);
+\draw[arr, <->] (c1) -- node[above, font=\footnotesize]{JSON-RPC} (s1);
+\draw[arr, <->] (c2) -- node[below, font=\footnotesize]{JSON-RPC} (s2);
+\draw[arr, <->] (s1) -- (r1);
+\draw[arr, <->] (s2) -- (r2);
+
+\node[entry, above=0.35cm of s1] (e1) {\textbf{1} tool descriptions};
+\node[entry, above=0.35cm of r1] (e2) {\textbf{2} tool results /\\external content};
+\node[entry, below=0.35cm of s2] (e3) {\textbf{3} server package\\and registry};
+\node[entry, below=0.35cm of r2] (e4) {\textbf{4} exposed\\network port};
+\end{tikzpicture}
+\caption{Simplified MCP architecture and the four places where attacker-controlled input enters (author's diagram based on \cite{mcpspec2026, mcpsecbp})}
+\label{fig:mcp_arch}
+\end{figure}
+
+\par Entry points 1 and 2 are dangerous only because a language model interprets the text that passes through them. Entry points 3 and 4 are not specific to AI at all: any software package can be replaced by a malicious copy, and any network service can be reached by someone who should not have access. The classification used in this study is built on this division.
+
+\section{A protocol that grew faster than its security model}
+
+\par The specification has gone through several revisions, and a number of security features were added only after the related problems had already been reported. Figure~\ref{fig:timeline} shows the main revisions next to some of the best-known disclosures. The version from November 2024 had no authorisation scheme. OAuth-based authorisation was introduced in the revision of March 2025. In June 2025 the model was changed again: an \acrshort{glo:mcp} server now acts only as an OAuth resource server, and clients have to bind each token to the server it is meant for. The accompanying security guidance explicitly prohibits ``token passthrough'', a practice in which a server takes a token it received and forwards it to another \acrshort{glo:api} without checking that the token was issued for itself \cite{mcpsecbp}. In July 2026 the protocol dropped its own session mechanism, and with it the problems caused by session identifiers \cite{mcpspec2026}. A young standard is expected to change often. In this case, though, each revision arrived when many servers were already running in production.
+
+\begin{figure}[!htb]
+\centering
+\begin{tikzpicture}[
+    font=\scriptsize,
+    ev/.style={align=center, text width=1.75cm, inner sep=1pt},
+]
+\draw[thick, -{Latex[length=2mm]}] (0,0) -- (16.6,0);
+\foreach \x/\lab in {0.6/Nov 2024, 2.6/Mar 2025, 4.4/Jun 2025, 6.2/Jul 2025, 8.0/Sep 2025, 9.8/Dec 2025, 11.6/Feb 2026, 13.4/May 2026, 15.2/Jul 2026}{
+    \fill (\x,0) circle (2pt);
+    \node[below=2pt, font=\scriptsize\bfseries] at (\x,0) {\lab};
+}
+\node[ev, above] at (0.6,0.25) {Protocol released without authorisation};
+\node[ev, above, text=natclassic] at (2.6,0.25) {OAuth added to the specification};
+\node[ev, above, text=natclassic] at (4.4,0.25) {Resource-server model and token binding};
+\node[ev, above] at (9.8,0.25) {Moved to Linux Foundation governance};
+\node[ev, above] at (13.4,0.25) {NSA publishes MCP guidance};
+\node[ev, above, text=natclassic] at (15.2,0.25) {Sessions removed from the specification};
+\node[ev, below=0.5cm, text=natnative] at (3.5,0) {Tool poisoning disclosed (Apr 2025)};
+\node[ev, below=0.5cm, text=natnative] at (5.3,0) {Inspector and mcp-remote RCEs};
+\node[ev, below=0.5cm, text=natnative] at (8.0,0) {First malicious server package};
+\node[ev, below=0.5cm, text=natnative] at (11.6,0) {Unauthenticated RCE chain in mcp-atlassian};
+\end{tikzpicture}
+\caption{Specification revisions (blue) and governance milestones (black) against selected security events (red) (compiled by the author from \cite{anthropic2024mcp, mcpspec2026, mcpsecbp, aaif2025, nsa2026, invariant2025poison, jfrog2025, oligo2025, thn2025postmark, pluto2026})}
+\label{fig:timeline}
+\end{figure}
+
+\section{Related work}
+
+\par Published research on \acrshort{glo:mcp} security can be divided into three groups. Studies in the first group build threat models. Hou et al. followed the life cycle of an \acrshort{glo:mcp} server through four phases (creation, deployment, operation and maintenance) and described 16 threat scenarios, which they grouped by four types of attackers; installer spoofing and tool name conflicts are two of these scenarios \cite{hou2025}. Radosevich and Halloran connected popular models to standard servers and showed that the models could be led into running malicious code, opening remote access and leaking credentials \cite{radosevich2025}. These studies explain which attacks are possible, but they do not say how often each type occurs in practice.
+
+\par The second group focuses on attacks that go through the model. The general technique, indirect prompt injection, was described by Greshake et al., who planted instructions in content that an application later retrieved and showed that this was enough to take control of an \acrshort{glo:llm}-based system \cite{greshake2023}. Prompt injection is also listed first in the OWASP Top 10 for \acrshort{glo:llm} applications \cite{owaspllm2025}. In the \acrshort{glo:mcp} context, Invariant Labs used the term \textit{tool poisoning} for instructions hidden in tool descriptions \cite{invariant2025poison}, and in May 2025 demonstrated that a single public GitHub issue could make an agent copy data from private repositories \cite{invariant2025github}. The MCPTox benchmark measured the problem on a larger scale. With 1,348 poisoned tool definitions based on 45 real servers, the most affected of 20 tested models followed the hidden instructions in 72.8\% of cases, and even the most careful one refused fewer than 3\% \cite{wang2025mcptox}.
+
+\par The third group looks at real deployments, and its results are collected in Table~\ref{tab:deployments}. Two of their findings matter most for this article. Servers without proper authentication are common on the public internet, and many servers exist only for a few days, which makes it hard to keep track of them or patch them. He et al. took a different route and built a cleaned dataset of \acrshort{glo:cve} records related to \acrshort{glo:mcp} \cite{he2026}.
+
+\begin{table}[!htb]
+\caption{Deployment-level evidence from 2026 measurement studies}
+\label{tab:deployments}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{} l l X @{}}
+\toprule
+\textbf{Study} & \textbf{Sample} & \textbf{Key finding} \\
+\midrule
+Zhou et al. \cite{zhou2026} & 7,973 live remote servers & 40.55\% expose tools without any authentication; 29\% use static keys; all 119 OAuth servers tested had at least one flaw \\
+Padilla \cite{padilla2026} & 414 audited servers & 91.8\% lack OAuth; 41.6\% of servers seen in one scan disappeared within three days \\
+He et al. \cite{he2026} & 24 validated CVEs & 87.5\% rated Critical or High; 75\% caused by insufficient input validation \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\par \textbf{Research gap.} Every group of studies covers only one part of the problem. Work based on \acrshort{glo:cve} records sees mainly implementation bugs, because weaknesses that depend on a language model rarely get an identifier. Work on prompt injection sees the model-level risk but not the ordinary bugs around it. I did not find a study that puts both kinds of weaknesses into the same dataset and asks where each one was introduced. This article attempts that on a small but fully documented sample.
