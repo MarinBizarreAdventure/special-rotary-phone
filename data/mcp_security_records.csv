@@ -1,0 +1,55 @@
+id,title,identifier,disclosed,component,nature,origin,weakness,insecure_default,first_party,source
+R01,MCP TypeScript SDK cross-client data leak,CVE-2026-25536,2026-02-04,SDK,classic,implementation,isolation,no,yes,VMP
+R02,MCPJam Inspector remote code execution,CVE-2026-23744,2026-02-01,Dev tooling,classic,implementation,access-control,yes,no,VMP
+R03,Git MCP server injection and traversal chain,CVE-2025-68143/68144/68145,2026-01-20,Server,classic,implementation,path-traversal,no,yes,VMP
+R04,GitHub Kanban MCP server command execution,CVE-2026-0756,2026-01-20,Server,classic,implementation,command-injection,no,no,VMP
+R05,MarkItDown MCP server SSRF,,2026-01-20,Server,classic,implementation,ssrf,no,no,VMP
+R06,Zen MCP server path traversal,CVE-2025-66689,2026-01-15,Server,classic,implementation,path-traversal,no,no,VMP
+R07,filesystem-mcp path traversal,CVE-2025-67366,2026-01-15,Server,classic,implementation,path-traversal,no,no,VMP
+R08,gemini-mcp-tool command injection,CVE-2026-0755,2026-01-09,Server,classic,implementation,command-injection,no,no,VMP
+R09,Fetch MCP server SSRF,CVE-2025-65513,2025-12-09,Server,classic,implementation,ssrf,no,no,VMP
+R10,Sampling capability abuse,,2025-12-05,Protocol,ai-native,protocol-design,injection-via-server,no,no,VMP
+R11,Cross-server registry hijacking,,2025-10-18,Ecosystem,hybrid,supply-chain,mixed,no,no,VMP
+R12,Kluster Verify credit exhaustion,,2025-10-16,Server,classic,implementation,access-control,no,no,VMP
+R13,Cursor case-sensitivity configuration bypass,CVE-2025-59944,2025-10-10,Host,hybrid,implementation,mixed,no,no,VMP
+R14,Vet MCP server DNS rebinding,CVE-2025-59163,2025-10-06,Server,classic,implementation,access-control,yes,no,VMP
+R15,Amp agent API key exfiltration via injection,,2025-10-03,Host,ai-native,integration-design,injection-via-content,no,no,VMP
+R16,Kilo Code instructions hidden in dependencies,,2025-10-02,Host,ai-native,supply-chain,injection-via-content,no,no,VMP
+R17,Framelink Figma MCP server command injection,CVE-2025-53967,2025-10-01,Server,classic,implementation,command-injection,no,no,VMP
+R18,Microsoft Learn MCP server SSRF,TRA-2025-36,2025-09-19,Server,classic,implementation,ssrf,no,no,VMP
+R19,Coder agent API DNS rebinding,,2025-09-19,Host,classic,implementation,access-control,yes,no,VMP
+R20,Neo4j Cypher MCP server DNS rebinding,,2025-09-11,Server,classic,implementation,access-control,yes,no,VMP
+R21,Zero-click code execution via shared document,,2025-09-05,Host,hybrid,integration-design,mixed,no,no,VMP
+R22,thirdweb MCP server unauthorised transactions,,2025-09-03,Server,classic,implementation,access-control,no,no,VMP
+R23,Grafana MCP server unauthenticated SSE,,2025-09-02,Server,classic,deployment,access-control,yes,no,VMP
+R24,Jira ticket injection leading to token theft,,2025-08-20,Host,ai-native,integration-design,injection-via-content,no,no,VMP
+R25,Cursor approved-configuration swap (MCPoison),CVE-2025-54136,2025-08-01,Host,classic,implementation,integrity-check,no,no,VMP
+R26,Rogue server script injection into IDE browser,,2025-07-22,Host,classic,implementation,integrity-check,no,no,VMP
+R27,Output poisoning through tool results,,2025-07-18,Protocol,ai-native,protocol-design,injection-via-content,no,no,VMP
+R28,DNS rebinding in official SDKs,CVE-2025-66414/66416,2025-07-10,SDK,classic,implementation,access-control,yes,yes,VMP
+R29,mcp-remote OS command injection,CVE-2025-6514,2025-07-09,Host,classic,implementation,command-injection,no,no,VMP
+R30,Kubernetes MCP server command injection,CVE-2025-53355,2025-07-08,Server,classic,implementation,command-injection,no,no,VMP
+R31,node-code-sandbox-mcp sandbox escape,CVE-2025-53372,2025-07-08,Server,classic,implementation,command-injection,no,no,VMP
+R32,Heroku app ownership transfer via injection,,2025-06-30,Host,ai-native,integration-design,injection-via-content,no,no,VMP
+R33,create-mcp-server-stdio command injection,CVE-2025-54994,2025-06-20,Dev tooling,classic,implementation,command-injection,no,no,VMP
+R34,MCP Inspector unauthenticated proxy,CVE-2025-49596,2025-06-13,Dev tooling,classic,implementation,access-control,yes,yes,VMP
+R35,GitHub issue injection leaking private repositories,,2025-05-26,Host,ai-native,integration-design,injection-via-content,no,no,VMP
+R36,Tool parameter abuse,,2025-05-15,Protocol,ai-native,protocol-design,injection-via-server,no,no,VMP
+R37,Plaintext credential storage in server configs,,2025-04-30,Server,classic,deployment,credential-exposure,yes,yes,VMP
+R38,ANSI escape sequences hiding instructions,,2025-04-29,Host,hybrid,implementation,mixed,no,yes,VMP
+R39,Conversation history theft via trigger phrases,,2025-04-23,Protocol,ai-native,protocol-design,injection-via-server,no,no,VMP
+R40,Line jumping before tool invocation,,2025-04-21,Protocol,ai-native,protocol-design,injection-via-server,no,no,VMP
+R41,Tool poisoning escalated to code execution,,2025-04-17,Protocol,ai-native,protocol-design,injection-via-server,no,no,VMP
+R42,Malicious local stdio servers,,2025-04-13,Ecosystem,classic,supply-chain,malicious-package,no,no,VMP
+R43,Rug pull through silent tool redefinition,,2025-04-09,Protocol,ai-native,protocol-design,injection-via-server,no,no,VMP
+R44,Cross-server tool shadowing,,2025-04-09,Protocol,ai-native,protocol-design,injection-via-server,no,no,VMP
+R45,Messaging data exfiltration via co-installed server,,2025-04-07,Protocol,ai-native,protocol-design,injection-via-server,no,no,VMP
+R46,Tool poisoning in tool descriptions,,2025-04-01,Protocol,ai-native,protocol-design,injection-via-server,no,no,VMP
+R47,Consent fatigue,,2025-04-01,Protocol,hybrid,protocol-design,mixed,no,no,VMP
+R48,Tool name collisions,,2025-04-01,Protocol,ai-native,protocol-design,injection-via-server,no,no,VMP
+R49,Session identifiers carried in URLs,,2025-03-29,Protocol,classic,protocol-design,credential-exposure,no,yes,VMP
+R50,Asana MCP cross-tenant data exposure,,2025-06-18,Server,classic,implementation,isolation,no,no,Press reports
+R51,Filesystem server sandbox escape (EscapeRoute),CVE-2025-53109/53110,2025-07-01,Server,classic,implementation,path-traversal,no,yes,Cymulate
+R52,Malicious postmark-mcp package,,2025-09-25,Ecosystem,classic,supply-chain,malicious-package,no,no,Koi Security
+R53,Hosting registry build path traversal,,2025-10-22,Ecosystem,classic,supply-chain,path-traversal,no,no,GitGuardian
+R54,mcp-atlassian file write and SSRF chain,CVE-2026-27825/27826,2026-02-26,Server,classic,implementation,path-traversal,yes,no,Pluto Security
