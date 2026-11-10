@@ -1,0 +1,88 @@
+\documentclass{class/tum_report}
+
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{microtype}
+\let\tumyear\year
+\ExplSyntaxOn
+\cs_set_eq:NN \year \tex_year:D
+\ExplSyntaxOff
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.18}
+\usetikzlibrary{arrows.meta, positioning, fit, backgrounds, calc}
+\let\year\tumyear
+
+\geometry{a4paper, top=2cm, bottom=2cm, left=2cm, right=2cm}
+
+\titleclass{\chapter}{straight}
+\titlespacing*{\chapter}{0pt}{16pt}{4pt}
+\setlength{\textfloatsep}{12pt plus 2pt minus 2pt}
+\setlength{\intextsep}{10pt plus 2pt minus 2pt}
+\newcommand{\tocchapter}[1]{\chapter*{#1}\phantomsection\addcontentsline{toc}{chapter}{#1}\nobreak}
+
+\definecolor{natclassic}{HTML}{3B6EA8}
+\definecolor{nathybrid}{HTML}{D9952B}
+\definecolor{natnative}{HTML}{B8475A}
+\definecolor{softgray}{HTML}{6B7280}
+\hypersetup{colorlinks=true, linkcolor=black, citecolor=natclassic, urlcolor=natclassic}
+
+\newacronym[description={Application Programming Interface. A defined way for one program to request data or actions from another, usually over HTTP}]{glo:api}{API}{Application Programming Interface}
+\newacronym[description={Common Vulnerabilities and Exposures. A public catalogue that gives each confirmed security flaw in a specific product a unique identifier, for example CVE-2025-6514}]{glo:cve}{CVE}{Common Vulnerabilities and Exposures}
+\newacronym[description={Common Vulnerability Scoring System. A 0 to 10 scale used to rate the severity of a vulnerability; scores of 9.0 and above are considered critical}]{glo:cvss}{CVSS}{Common Vulnerability Scoring System}
+\newacronym[description={Personal identification number (Numărul de identificare de stat). The 13-digit number assigned to every citizen of the Republic of Moldova and used as the key in state registries}]{glo:idnp}{IDNP}{personal identification number}
+\newacronym[description={Large Language Model. A neural network trained on large amounts of text that generates answers and, in agent systems, decides which tools to call}]{glo:llm}{LLM}{Large Language Model}
+\newacronym[description={Model Context Protocol. An open standard, published in 2024, that defines how AI applications discover and call external tools and data sources}]{glo:mcp}{MCP}{Model Context Protocol}
+\newacronym[description={Remote Code Execution. A vulnerability that lets an attacker run their own commands on another machine, usually the most severe outcome of an attack}]{glo:rce}{RCE}{Remote Code Execution}
+\newacronym[description={Software Development Kit. A library provided by the protocol maintainers that developers use to build servers and clients}]{glo:sdk}{SDK}{Software Development Kit}
+\newacronym[description={Server-Side Request Forgery. A flaw that makes a server send requests to addresses chosen by the attacker, often internal services or cloud metadata endpoints}]{glo:ssrf}{SSRF}{Server-Side Request Forgery}
+\newacronym[description={Vulnerable MCP Project. An openly maintained online catalogue of documented MCP weaknesses, used as the main data source of this study}]{glo:vmp}{VMP}{Vulnerable MCP Project}
+
+\input{generated/stats.tex}
+\input{generated/quarter_plot.tex}
+\input{generated/nature_plot.tex}
+
+\begin{document}
+
+    \renewcommand{\glossaryname}{List of abbreviations}
+
+    \input{title/title_page.tex}
+    \clearpage
+
+    \input{additional/abstract.tex}
+    \clearpage
+
+    \input{additional/adnotare.tex}
+    \clearpage
+
+    \addtocontents{toc}{\protect \thispagestyle{empty}}
+    \tableofcontents
+    \thispagestyle{empty}
+    \clearpage
+
+    \addcontentsline{toc}{chapter}{\glossaryname}
+    \printnoidxglossary[type=\acronymtype, nogroupskip, nonumberlist, style=myGlossaryStyle]
+    \thispagestyle{empty}
+    \clearpage
+
+    \input{additional/introduction.tex}
+
+    \input{chapters/chapter1.tex}
+
+    \input{chapters/chapter2.tex}
+
+    \input{chapters/chapter3.tex}
+
+    \input{chapters/chapter4.tex}
+
+    \input{additional/conclusion.tex}
+    \clearpage
+
+    \phantomsection
+    \addcontentsline{toc}{chapter}{Bibliography}
+    \input{additional/references.tex}
+    \clearpage
+
+    \input{additional/appendix.tex}
+
+\end{document}
