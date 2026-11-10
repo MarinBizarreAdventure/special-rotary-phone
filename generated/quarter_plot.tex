@@ -1,0 +1,9 @@
+\pgfplotsset{quarteraxis/.style={symbolic x coords={2025 Q1,2025 Q2,2025 Q3,2025 Q4,2026 Q1}}}
+\newcommand{\quarterPlots}{%
+\addplot coordinates {(2025 Q1,1) (2025 Q2,5) (2025 Q3,13) (2025 Q4,5) (2026 Q1,9)};
+\addlegendentry{Classic}
+\addplot coordinates {(2025 Q1,0) (2025 Q2,2) (2025 Q3,1) (2025 Q4,2) (2026 Q1,0)};
+\addlegendentry{Hybrid}
+\addplot coordinates {(2025 Q1,0) (2025 Q2,11) (2025 Q3,2) (2025 Q4,3) (2026 Q1,0)};
+\addlegendentry{AI-native}
+}
