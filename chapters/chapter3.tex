@@ -1,0 +1,115 @@
+\chapter{Results}
+
+\section{Classic versus AI-native weaknesses (RQ1)}
+
+\par Out of \nRecords{} records, \nClassic{} (\pClassic\%) were classified as classic, \nNative{} (\pNative\%) as AI-native and \nHybrid{} (\pHybrid\%) as hybrid. The catalogue intentionally collects attack techniques against the protocol, and still about three in five of the records are problems that are covered in a standard web security course. Four families account for \nMainFamilies{} of the \nClassic{} classic records. Command injection (\nCommandInjection{} records) appears, for example, in the Kubernetes, Figma and GitHub Kanban servers, and path traversal (\nPathTraversal{}) in the filesystem, git and Zen servers. Servers that download content from URLs suffer from \acrfull{glo:ssrf} (\nSsrf{}). The largest family, with \nAccessControl{} records, is missing access control: services that accept requests without authentication or authorisation, or that any web page can reach through DNS rebinding. What is left are malicious packages, data leaking between clients or tenants, missing integrity checks and exposed credentials. Some of the classic flaws allow \acrfull{glo:rce} and have very high severity scores: 9.6 on the \acrshort{glo:cvss} scale for the command injection in \texttt{mcp-remote} \cite{jfrog2025}, 9.4 for the unauthenticated proxy in the official MCP Inspector \cite{oligo2025}, and 9.1 for the file-write flaw in \texttt{mcp-atlassian}, a package downloaded more than four million times \cite{pluto2026}.
+
+\par The AI-native records are fewer and much more similar to each other. Nearly all of them rely on text that the user never sees but that the model reads and follows. In \nNativeViaServer{} of them the text is supplied by a connected server. This covers tool poisoning, ``rug pulls'' (a server changes the description of a tool after the user has approved it) and tool shadowing, where one server influences how the tools of another server are used. In the other \nNativeViaContent{} the text arrives inside the data that tools return, for example a GitHub issue or a Jira ticket.
+
+\par Figure~\ref{fig:quarters} adds the time of disclosure. Most AI-native records date from the second quarter of 2025, when tool poisoning, rug pulls and shadowing were described by different researchers within a few weeks. From the third quarter on, the majority of new records are classic implementation bugs in third-party servers. My interpretation is that design-level attacks follow directly from how the protocol works and were noticed early, while implementation bugs accumulated as more servers were written. The last bar covers only January and February 2026.
+
+\begin{figure}[!htb]
+\centering
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    xbar stacked,
+    width=0.94\textwidth,
+    height=4.6cm,
+    bar width=13pt,
+    xmin=0, xmax=36,
+    symbolic y coords={AI-native, Hybrid, Classic},
+    ytick=data,
+    xlabel={Number of records},
+    legend style={at={(0.98,0.04)}, anchor=south east, font=\small, draw=none, fill=white, fill opacity=0.85, text opacity=1},
+    legend cell align=left,
+    nodes near coords,
+    nodes near coords style={font=\small, color=white},
+    point meta=explicit symbolic,
+    axis x line*=bottom,
+    axis y line*=left,
+    tick label style={font=\small},
+    enlarge y limits=0.3,
+]
+\addplot[fill=natclassic, draw=none] coordinates {(\cveWithClassic,Classic)[\cveWithClassic] (\cveWithHybrid,Hybrid)[\cveWithHybrid] (\cveWithAInative,AI-native)[]};
+\addlegendentry{CVE assigned}
+\addplot[fill=natclassic!35, draw=none, nodes near coords style={color=black}] coordinates {(\cveWithoutClassic,Classic)[\cveWithoutClassic] (\cveWithoutHybrid,Hybrid)[\cveWithoutHybrid] (\cveWithoutAInative,AI-native)[\cveWithoutAInative]};
+\addlegendentry{No CVE}
+\end{axis}
+\end{tikzpicture}
+\caption{Records by nature and CVE assignment (n = \nRecords)}
+\label{fig:nature}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.48\textwidth}
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    ybar stacked,
+    quarteraxis,
+    width=\textwidth,
+    height=4.6cm,
+    bar width=17pt,
+    ymin=0, ymax=20,
+    xtick=data,
+    ylabel={Number of records},
+    legend style={at={(0.98,0.97)}, anchor=north east, font=\small, draw=none},
+    legend cell align=left,
+    cycle list={{fill=natclassic, draw=none},{fill=nathybrid, draw=none},{fill=natnative, draw=none}},
+    axis x line*=bottom,
+    axis y line*=left,
+    tick label style={font=\small},
+    x tick label style={font=\small, align=center, text width=0.8cm},
+    enlarge x limits=0.15,
+]
+\quarterPlots
+\end{axis}
+\end{tikzpicture}
+\caption{Records by quarter of disclosure and nature}
+\label{fig:quarters}
+\end{minipage}
+\end{figure}
+
+\section{Where the weaknesses originate (RQ2)}
+
+\par Table~\ref{tab:origin} combines the nature of each record with the stage at which the weakness was introduced, and the two axes turn out to be closely linked. Classic weaknesses come almost only from implementation: \nImplClassic{} records, or \pImplClassic\% of the whole dataset, are ordinary programming errors in servers, clients, SDKs or developer tools. AI-native weaknesses come from design. The protocol itself permits \nNativeProtocol{} of them. The main reason is that any connected server can put arbitrary text in front of the model, and the specification does not require tool definitions to be fixed or approved again after a change. Another \nNativeIntegration{} come from integration design. In those cases each component worked as it was built, but the agent had a token with broad permissions and was also reading untrusted content, which is what happened in the GitHub case \cite{invariant2025github}.
+
+\begin{table}[!htb]
+\setlength{\tabcolsep}{3pt}
+\begin{minipage}[t]{0.46\textwidth}
+\centering
+\caption{Records by origin and nature}
+\label{tab:origin}
+\footnotesize
+\begin{tabular}{@{} l c c c c @{}}
+\toprule
+\textbf{Origin} & \textbf{Classic} & \textbf{Hybrid} & \textbf{AI-native} & \textbf{Total} \\
+\midrule
+\input{generated/origin_table.tex}
+\end{tabular}
+\end{minipage}\hfill
+\begin{minipage}[t]{0.52\textwidth}
+\centering
+\caption{Records by affected component}
+\label{tab:component}
+\footnotesize
+\begin{tabular}{@{} l c c c c c @{}}
+\toprule
+\textbf{Component} & \textbf{Classic} & \textbf{Hybrid} & \textbf{AI-native} & \textbf{Total} & \textbf{With CVE} \\
+\midrule
+\input{generated/component_table.tex}
+\end{tabular}
+\end{minipage}
+\end{table}
+
+\par Table~\ref{tab:component} breaks the records down by component. All \nServer{} records about \acrshort{glo:mcp} servers are classic, and \nServerCve{} of them have a \acrshort{glo:cve} identifier. Hosts, that is editors and agent applications, have the most mixed profile. The host is where the model, the user interface and the tool connections meet.
+
+\section{A blind spot in vulnerability tracking}
+
+\par Figure~\ref{fig:nature} also shows a result that I had not planned to look for. \nCve{} records (\pCve\%) have a \acrshort{glo:cve} identifier, \nCveClassic{} of them classic. None of the AI-native records has one. The reason lies in how the \acrshort{glo:cve} system works: it describes a defect in a specific version of a product, which the vendor can fix in a later version. Tool poisoning or an injection hidden in a ticket does not fit this definition, because the vulnerable ``product'' is a combination of a model, a protocol and a set of permissions. In practice, an organisation that checks its \acrshort{glo:mcp} exposure with a standard dependency scanner will only see the classic part of the risk. This also explains why the \acrshort{glo:cve}-based study by He et al. found mostly injection and traversal flaws \cite{he2026}; the other type of weakness does not reach that data source.
+
+\section{Signs of rushed engineering (RQ3)}
+
+\par Two attributes in the dataset are related to time pressure rather than to unknown threats. The first one is \textit{insecure defaults}. In \nInsecureDefault{} records, or \pInsecureDefaultOfClassic\% of the classic ones, the weakness was caused by a default setting or became exploitable because of it. Typical examples are servers that listen on all network interfaces, the missing DNS rebinding protection in the official \acrfull{glo:sdk}s and a debugging proxy that did not require a password. Each of these is a small configuration choice that is convenient during development and was then left in the released version.
+
+\par The second attribute is \textit{first-party code}. \nFirstParty{} records concern code or design published by Anthropic or by the protocol project. They cover the official SDKs, the MCP Inspector, the git and filesystem reference servers and the session design of the early specification. Two less obvious cases belong here as well: credentials that several reference servers stored in plain text, and terminal escape sequences that could hide instructions from a user of Claude Code. \nFirstPartyClassic{} of these records are classic. Reference implementations are used as examples by many developers, so an error there tends to be repeated in other projects. Both observations agree with the measurement studies in Table~\ref{tab:deployments}, where these problems appear on a much larger scale.

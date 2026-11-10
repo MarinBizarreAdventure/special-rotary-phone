@@ -1,0 +1,62 @@
+\chapter{Discussion}
+
+\section{Why rapid adoption produced old bugs}
+
+\par In most of the analysed cases the security problem was an ordinary software engineering mistake that happened to be made in an AI product. Going through the original reports, I noticed five mechanisms that repeat and that connect the speed of adoption with these mistakes.
+
+\par \textbf{Thin wrappers around command-line tools.} Many servers only pass requests on to existing programs such as \texttt{git}, \texttt{kubectl} or \texttt{curl}. The fastest way to write such a server is to build a command string from the tool arguments and hand it to the shell, and the command injection flaws in the Kubernetes, Figma and GitHub Kanban servers were created in this way. The language model plays no role in them; any client able to send a crafted argument could exploit these servers.
+
+\par \textbf{Local assumptions on the network.} In the beginning, \acrshort{glo:mcp} servers ran locally over stdio, and the only program talking to them was the user's own application. When these servers were moved to HTTP, many of them kept the assumptions of the local setup: no authentication, listening on every interface and no validation of the \texttt{Host} or \texttt{Origin} headers. In the MCP Inspector case, these settings combined with browser behaviour so that opening a malicious web page was enough to execute code on the developer's computer \cite{oligo2025}.
+
+\par \textbf{Security added to the specification afterwards.} Authorisation, token binding and the removal of sessions all came after the protocol was already in use (Figure~\ref{fig:timeline}). Servers written for an earlier revision are not updated automatically, so every late change leaves behind older implementations with weaker protection. This agrees with the measurement by Zhou et al., where four out of ten live servers still had no authentication in 2026 \cite{zhou2026}.
+
+\par \textbf{Reference code copied as a template.} The official filesystem server checked whether a path was inside the allowed directory by comparing the beginning of two strings \cite{cymulate2025}. Developers who use a reference server as a starting point are likely to copy such a check, so a mistake in first-party code has a larger effect than a single record suggests.
+
+\par \textbf{Installation without review.} Servers are installed from public registries and package managers with one command, often by people who would be much more careful with an unknown browser extension. The \texttt{postmark-mcp} package worked correctly for fifteen versions; the sixteenth added a single line that sent a hidden copy of every email to the attacker \cite{thn2025postmark}. In another case, a path traversal in a hosting platform exposed a token that controlled more than three thousand hosted servers \cite{gitguardian2025}.
+
+\section{What is specific to AI}
+
+\par The AI-native records are a minority, but they are more difficult to deal with. Their cause is a property of current language models and not an error in one component: a model cannot reliably separate the data it is supposed to process from the instructions it is supposed to follow. Willison describes the most dangerous situation as a ``lethal trifecta'', in which one agent has access to private data, reads untrusted content and is able to send information outside \cite{willison2025}. The GitHub incident matches this description. The GitHub server worked as designed, so no patch to it would have stopped the attack \cite{invariant2025github}. The MCPTox results support this view: the more capable models were often easier to manipulate, because they are better at following instructions \cite{wang2025mcptox}.
+
+\par Protection against these weaknesses therefore has to be built into the architecture of the system; the operator controls in Table~\ref{tab:controls} are of this kind. And since \acrshort{glo:cve} feeds do not contain them (Figure~\ref{fig:nature}), they have to be covered during threat modelling and cannot be left to vulnerability management alone.
+
+\section{A local parallel: the 2026 Moldovan e-government breach}
+
+\par The breach of the Moldovan e-government systems in October 2026 did not involve \acrshort{glo:mcp}. It is discussed here because it shows what a trust error of this kind costs even without AI. According to public reports, between 19 and 24 October attackers sent automated requests from more than 638 IP addresses, with about one million requests on the busiest day, and obtained personal data linked to national identification numbers (\acrshort{glo:idnp}) \cite{biometric2026moldova, tv82026, cotidianul2026}. The number of affected people, first estimated at 750,000, was later corrected to about 450,000. After a meeting of the National Security Council, President Maia Sandu explained that the cause was structural. The systems verified which application was asking for data, but not who the person behind the request was or whether that person had the right to see the data. As a result, one application with incorrectly configured access opened the registries of at least ten institutions \cite{tv82026}.
+
+\par This is a form of the confused deputy problem, which Hardy described in 1988: a program with wide authority uses it on behalf of a caller who should not have it \cite{hardy1988}. In \acrshort{glo:api} security the closest category is broken object-level authorisation, the first item of the OWASP API Security Top 10 \cite{owaspapi2023}. The \acrshort{glo:mcp} guidance deals with related but narrower cases: its own confused deputy section is about an OAuth proxy, and its rule against token passthrough obliges a server to accept only tokens that were issued for it \cite{mcpsecbp}. Neither is the mechanism that failed in Moldova. The principle is shared, though. Authority has to be checked for the real requester, where the data is kept, and cannot be inherited from an intermediary. For public institutions this has a practical consequence. Suppose an AI assistant is connected to state registries with this trust model, in which the assistant is trusted and the citizen's rights are not checked. An attacker would then not need to write a script at all. Instructions hidden in a document or in a form field could be enough to make the assistant run those queries for them.
+
+\section{Recommended controls}
+
+\par Table~\ref{tab:controls} lists the controls that follow from the analysis. Most of them are well known from general secure development practice. The last column names the group of records, or the part of the Moldovan case, to which each control applies. Such a control lowers the risk for its group; whether it would have stopped every single case was not tested.
+
+\begin{table}[!htb]
+\caption{Recommended controls and the records they address (number of records in brackets)}
+\label{tab:controls}
+\centering
+\small
+\begin{tabularx}{\textwidth}{@{} l X >{\raggedright\arraybackslash}p{4.4cm} @{}}
+\toprule
+\textbf{Audience} & \textbf{Control} & \textbf{Addresses} \\
+\midrule
+Developers & Never build shell strings; pass arguments as arrays and validate them against an allow-list & Command injection (\nCommandInjection) \\
+ & Resolve symbolic links and canonical paths before any sandbox check & Path traversal (\nPathTraversal) \\
+ & Bind local servers to the loopback address, require a token, check \texttt{Host}/\texttt{Origin} & Missing access control (\nAccessControl) \\
+ & Block private address ranges for any URL fetched on behalf of a model & SSRF (\nSsrf) \\
+\midrule
+Operators & Keep an inventory of servers; pin versions and hash tool descriptions to detect silent changes & Malicious packages (\nMaliciousPackage), text supplied by servers (\nNativeViaServer) \\
+ & Issue a separate, narrowly scoped token per user and per server; never reuse one broad token & Integration design (\nIntegration) \\
+ & Do not combine private data, untrusted content and outbound actions in one agent session & Injected content (\nNativeViaContent) \\
+ & Require human confirmation for irreversible or external actions & AI-native (\nNative), hybrid (\nHybrid) \\
+\midrule
+Public sector & Authorise every request by end-user identity at the data source, not by calling application & Moldovan case: confused deputy \\
+ & Rate-limit and monitor bulk queries on personal identifiers & Moldovan case: bulk enumeration \\
+ & Include AI integrations in security review before procurement and launch & All records \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Limitations}
+\label{sec:validity}
+
+\par The sample is small. With \nRecords{} records, the 95\% Wilson interval for the share of classic weaknesses runs from \ciClassicLow\% to \ciClassicHigh\%, so what the data supports is that classic weaknesses make up about half of the records or more, not an exact percentage. The data is also not current. The catalogue had not been updated between \lastDisclosure{} and November 2026, when the data was collected, so weaknesses disclosed in those nine months, including any connected with the July 2026 revision of the specification, are not covered. The dataset depends largely on the choices of one public catalogue. It is likely to over-represent the first wave of design-level attacks, which researchers documented in detail, and to under-represent ordinary bugs that were fixed without a public report; if so, the real share of classic weaknesses is higher than measured here. All records were classified by one person. The rules and data are published, but agreement between independent coders was not measured. The unit of analysis is a record, not a single vulnerability, so a chain of three related \acrshort{glo:cve}s counts once, and so does a general attack technique. Some sources are blogs of security companies, which benefit from presenting problems as serious; where possible, numbers were taken from peer-reviewed papers or preprints instead. Finally, the information about the Moldovan breach comes from official statements that were still being updated while this article was written.
