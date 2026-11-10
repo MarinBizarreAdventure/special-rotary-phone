@@ -1,0 +1,15 @@
+*.aux
+*.log
+*.out
+*.toc
+*.lof
+*.lot
+*.bbl
+*.bcf
+*.blg
+*.run.xml
+*.glo
+*.gls
+*.ist
+*.synctex.gz
+__pycache__/
